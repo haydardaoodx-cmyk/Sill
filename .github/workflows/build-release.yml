@@ -17,29 +17,29 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - name: List repository files
+      - name: Show repository files
         run: ls -la
 
       - name: Unzip Metrolist project
         run: unzip Metrolist-Modified.zip
 
-      - name: Detect project directory
+      - name: Fix permissions after unzip
         run: |
-          PROJECT_DIR=$(find . -maxdepth 1 -type d -name "Metrolist*" | head -n 1)
-          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
-          echo "Using project dir: $PROJECT_DIR"
+          chmod -R u+rwX Metrolist-12.12.4
 
       - name: Make gradlew executable
-        run: chmod +x $PROJECT_DIR/gradlew
+        run: chmod +x Metrolist-12.12.4/gradlew
 
-      - name: Build UNIVERSAL GMS RELEASE APK
+      - name: Verify gradlew
+        run: ls -la Metrolist-12.12.4/gradlew
+
+      - name: Build UNIVERSAL GMS RELEASE
         run: |
-          cd $PROJECT_DIR
+          cd Metrolist-12.12.4
           ./gradlew :app:assembleUniversalGmsRelease --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Metrolist-Universal-GMS-Release
-          path: |
-            ${{ env.PROJECT_DIR }}/app/build/outputs/apk/**/release/*.apk
+          path: Metrolist-12.12.4/app/build/outputs/apk/**/release/*.apk
