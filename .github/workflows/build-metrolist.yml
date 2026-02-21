@@ -1,0 +1,53 @@
+name: Build Metrolist Universal Release APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Java 21
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+
+    - name: Show repository files
+      run: ls -la
+
+    - name: Unzip Metrolist project
+      run: unzip Metrolist-Modified.zip
+
+    - name: Fix permissions after unzip
+      run: chmod -R u+rwX .
+
+    - name: Make gradlew executable
+      run: chmod +x gradlew
+
+    - name: Verify gradlew
+      run: ls -la gradlew
+
+    - name: Create Temporary Keystore
+      run: |
+        keytool -genkey -v -keystore temp.jks -keyalg RSA -keysize 2048 -validity 10000 \
+        -alias my-key-alias -storepass my-password -keypass my-password \
+        -dname "CN=Metrolist, OU=Dev, O=Metrolist, L=Unknown, S=Unknown, C=US"
+
+    - name: Build UNIVERSAL GMS RELEASE
+      run: |
+        ./gradlew assembleUniversalGmsRelease --no-daemon \
+        -Pandroid.injected.signing.store.file=$(pwd)/temp.jks \
+        -Pandroid.injected.signing.store.password=my-password \
+        -Pandroid.injected.signing.key.alias=my-key-alias \
+        -Pandroid.injected.signing.key.password=my-password
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: Metrolist-Universal-GMS-Release
+        path: app/build/outputs/apk/**/release/*.apk
